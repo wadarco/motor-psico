@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "formatter": {
+    "formatWithErrors": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "linter": {
+    "rules": {
+      "correctness": {
+        "noUnusedImports": "error",
+        "useHookAtTopLevel": "error",
+        "noUnusedVariables": "error"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "fix": "safe",
+          "level": "warn",
+          "options": { "functions": ["clsx"] }
+        }
+      },
+      "suspicious": {
+        "useAwait": "error",
+        "noConsole": "warn",
+        "noUnknownAtRules": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded"
+    }
+  },
+  "css": {
+    "parser": { "cssModules": true }
+  }
+}

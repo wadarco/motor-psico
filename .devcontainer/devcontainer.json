@@ -1,0 +1,7 @@
+{
+  "name": "motor-psico",
+  "build": {
+    "dockerfile": "Containerfile"
+  },
+  "runArgs": ["--hostname=archlinux", "--name=motor-psico"]
+}

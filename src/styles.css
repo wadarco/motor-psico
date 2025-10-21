@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --color-dn-background-200: var(--dn-background-200);
+  --color-dn-background-100: var(--dn-background-100);
+  --color-dn-foreground-100: oklch(from var(--dn-foreground-200) l c h / 70%);
+  --color-dn-foreground-200: var(--dn-foreground-200);
+}
+
+@layer theme {
+  ::selection {
+    color: var(--color-dn-background-200);
+    background-color: var(--dn-foreground-200);
+  }
+
+  :root {
+    @apply scheme-light;
+    --dn-background-100: oklch(97.315% 0.00011 271.152);
+    --dn-background-200: oklch(99.4% 0 24.04);
+    --dn-foreground-200: oklch(0% 0 0);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @apply scheme-dark;
+    --dn-background-100: oklch(22.97% 0.0015 197.05);
+    --dn-background-200: oklch(13% 0.002 246.26);
+    --dn-foreground-200: oklch(96.75% 0.0168 270);
+  }
+
+  .prose {
+    @apply prose-invert;
+  }
+}

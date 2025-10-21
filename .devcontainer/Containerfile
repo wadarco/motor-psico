@@ -1,0 +1,46 @@
+FROM archlinux:base-devel
+
+RUN pacman -Syu --noconfirm \
+  less\
+  git \
+  helix \
+  curl \
+  tar \
+  unzip \
+  pandoc-cli \
+  fish 
+
+ENV EDITOR=helix
+
+# Create a non-root user
+ARG USERNAME=motor-psico
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG USER_HOME=/home/${USERNAME}
+
+RUN groupadd --gid $USER_GID $USERNAME \
+  && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+  && chmod 0440 /etc/sudoers.d/$USERNAME
+
+RUN chsh -s /bin/fish $USERNAME
+USER $USERNAME
+
+# Set XDG Base Directory environment variables
+ENV XDG_CONFIG_HOME="${USER_HOME}/.config" \
+  XDG_CACHE_HOME="${USER_HOME}/.cache" \
+  XDG_DATA_HOME="${USER_HOME}/.local/share" \
+  XDG_STATE_HOME="${USER_HOME}/.local/state"
+
+# Install Bun 
+RUN curl -fsSL https://bun.com/install | bash
+
+RUN mkdir -p ${USER_HOME}/.config/fish/conf.d && \
+  echo 'set -gx PATH $HOME/.bun/bin $PATH' \
+  >> ${USER_HOME}/.config/fish/conf.d/bun-path.fish
+
+RUN mkdir -p $HOME/.config/fish/completions && \
+  SHELL=fish $HOME/.bun/bin/bun completions > $HOME/.config/fish/completions/bun.fish
+
+# remove Greeting Message
+ENV fish_greeting=
