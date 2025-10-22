@@ -43,33 +43,43 @@ export default function App({ wsUrl }: AppProps) {
   }, [textarea])
 
   return (
-    <div className="p-4">
-      <select
-        className="mb-2 bg-dn-background-100 py-2 text-dn-foreground-200"
-        name="from"
-        value={from}
-        onChange={(ev) => setFrom(ev.target.value)}
-      >
-        {FormatInputs.map((format) => (
-          <option key={format} value={format}>
-            {format}
-          </option>
-        ))}
-      </select>
+    <div className="grid h-screen grid-flow-col grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
+      <div className="h-full border-dn-foreground-100/80 border-b p-4 md:border-r md:border-b-0">
+        <select
+          className="mb-2 rounded py-2 text-dn-foreground-200 outline-none hover:bg-dn-background-100/60"
+          name="from"
+          value={from}
+          onChange={(ev) => setFrom(ev.target.value)}
+        >
+          {FormatInputs.map((format) => (
+            <option
+              className="bg-dn-background-100"
+              key={format}
+              value={format}
+            >
+              {format}
+            </option>
+          ))}
+        </select>
 
-      <textarea
-        className="w-full resize-none text-dn-foreground-100 outline-none"
-        name="text"
-        onChange={handleChange}
-      />
-      <hr />
-      <div className="prose lg:prose py-2">
-        {message && (
-          <div
-            /** biome-ignore lint/security/noDangerouslySetInnerHtml: render data */
-            dangerouslySetInnerHTML={{ __html: message }}
-          />
-        )}
+        <textarea
+          className="min-h-40 w-full resize-none text-dn-foreground-200 outline-none placeholder:text-dn-foreground-100"
+          name="text"
+          placeholder="Start typing here"
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className="p-4">
+        <p className="py-2">HTML</p>
+        <div className="prose lg:prose">
+          {message && (
+            <div
+              /** biome-ignore lint/security/noDangerouslySetInnerHtml: render data */
+              dangerouslySetInnerHTML={{ __html: message }}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

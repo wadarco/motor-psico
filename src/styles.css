@@ -16,17 +16,19 @@
 
   :root {
     @apply scheme-light;
-    --dn-background-100: oklch(97.315% 0.00011 271.152);
-    --dn-background-200: oklch(99.4% 0 24.04);
+    --dn-background-100: oklch(90.06% 0.0001 271.152);
+    --dn-background-200: oklch(99.115% 0.00423 15.765);
     --dn-foreground-200: oklch(0% 0 0);
+    
+    background-color: var(--dn-background-200);
   }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     @apply scheme-dark;
-    --dn-background-100: oklch(22.97% 0.0015 197.05);
-    --dn-background-200: oklch(13% 0.002 246.26);
+    --dn-background-100: oklch(29.313% 0.00003 271.152);
+    --dn-background-200: oklch(23.929% 0.00003 271.152);
     --dn-foreground-200: oklch(96.75% 0.0168 270);
   }
 
