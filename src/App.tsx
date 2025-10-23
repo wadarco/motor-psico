@@ -16,6 +16,9 @@ export default function App({ wsUrl }: AppProps) {
   const [message, setMessage] = useState('')
   const [from, setFrom] = useState<string>('markdown')
   const socket = useMemo(() => new WebSocket(wsUrl), [wsUrl])
+  const [outputSelector, setOutputSelector] = useState<'preview' | 'output'>(
+    'output',
+  )
 
   const handleChange = useCallback((ev: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = ev.target
@@ -65,14 +68,37 @@ export default function App({ wsUrl }: AppProps) {
       </div>
 
       <div className="p-4">
-        <p className="py-2">HTML</p>
+        <div className="p w-fit overflow-hidden pb-4">
+          <button
+            className={`cursor-pointer rounded-l-xl border border-dn-foreground-100 px-2 py-1 ${
+              outputSelector === 'output'
+                ? 'border-dn-foreground-200 bg-dn-foreground-200 text-dn-background-200'
+                : ''
+            }`}
+            onClick={() => setOutputSelector('output')}
+            type="button"
+          >
+            Output
+          </button>
+          <button
+            className={`-ml-[1px] cursor-pointer rounded-r-xl border border-dn-foreground-100 px-2 py-1 ${outputSelector === 'preview' ? 'border-dn-foreground-200 bg-dn-foreground-200 text-dn-background-200' : ''}`}
+            onClick={() => setOutputSelector('preview')}
+            type="button"
+          >
+            Preview
+          </button>
+        </div>
+
         <div className="prose lg:prose">
-          {message && (
-            <div
-              /** biome-ignore lint/security/noDangerouslySetInnerHtml: render data */
-              dangerouslySetInnerHTML={{ __html: message }}
-            />
-          )}
+          {message &&
+            (outputSelector === 'preview' ? (
+              <div
+                /** biome-ignore lint/security/noDangerouslySetInnerHtml: render data */
+                dangerouslySetInnerHTML={{ __html: message }}
+              />
+            ) : (
+              <div>{message}</div>
+            ))}
         </div>
       </div>
     </div>
