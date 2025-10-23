@@ -15,7 +15,6 @@ export default function App({ wsUrl }: AppProps) {
   const [textarea, setTextarea] = useState('')
   const [message, setMessage] = useState('')
   const [from, setFrom] = useState<string>('markdown')
-  const [debouncedText, setDebouncedText] = useState(textarea)
   const socket = useMemo(() => new WebSocket(wsUrl), [wsUrl])
 
   const handleChange = useCallback((ev: ChangeEvent<HTMLTextAreaElement>) => {
@@ -28,19 +27,14 @@ export default function App({ wsUrl }: AppProps) {
 
   useEffect(() => {
     if (socket.readyState === socket.OPEN) {
-      const msg = JSON.stringify({ text: debouncedText, from })
+      const msg = JSON.stringify({ text: textarea, from })
       socket.send(msg)
     }
-  }, [socket, from, debouncedText])
+  }, [socket, from, textarea])
 
   useEffect(() => {
     socket.addEventListener('message', (ev) => setMessage(ev.data))
   }, [socket])
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedText(textarea), 300)
-    return () => clearTimeout(timer)
-  }, [textarea])
 
   return (
     <div className="grid h-screen grid-flow-col grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
