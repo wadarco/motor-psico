@@ -39,6 +39,13 @@
     }
   },
   "css": {
-    "parser": { "cssModules": true }
+    "parser": { "cssModules": true, "tailwindDirectives": true }
+  },
+  "html": {
+    "formatter": {
+      "enabled": true,
+      "indentScriptAndStyle": true
+    },
+    "experimentalFullSupportEnabled": true
   }
 }
