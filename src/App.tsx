@@ -20,6 +20,13 @@ export default function App({ wsUrl }: AppProps) {
     'output',
   )
 
+  const styles = useMemo(() => {
+    const nodes = document.querySelectorAll('link[rel="stylesheet"]')
+    return Array.from(nodes)
+      .map((node) => node.outerHTML)
+      .join('')
+  }, [])
+
   const handleChange = useCallback((ev: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = ev.target
 
@@ -92,9 +99,10 @@ export default function App({ wsUrl }: AppProps) {
         <div className="prose lg:prose">
           {message &&
             (outputSelector === 'preview' ? (
-              <div
-                /** biome-ignore lint/security/noDangerouslySetInnerHtml: render data */
-                dangerouslySetInnerHTML={{ __html: message }}
+              <iframe
+                title="preview"
+                sandbox=""
+                srcDoc={`${styles}${message}`}
               />
             ) : (
               <div>{message}</div>
