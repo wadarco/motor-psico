@@ -96,18 +96,16 @@ export default function App({ wsUrl }: AppProps) {
           </button>
         </div>
 
-        <div className="prose lg:prose">
-          {message &&
-            (outputSelector === 'preview' ? (
-              <iframe
-                title="preview"
-                sandbox=""
-                srcDoc={`${styles}${message}`}
-              />
-            ) : (
-              <div>{message}</div>
-            ))}
-        </div>
+        {message &&
+          (outputSelector === 'preview' ? (
+            <iframe
+              title="preview"
+              sandbox=""
+              srcDoc={`${styles}<div class="prose lg:prose">${message}<div/>`}
+            />
+          ) : (
+            <div>{message}</div>
+          ))}
       </div>
     </div>
   )
