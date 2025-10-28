@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { FormatInputs } from './lib/utils.ts'
@@ -19,13 +20,6 @@ export default function App({ wsUrl }: AppProps) {
   const [outputSelector, setOutputSelector] = useState<'preview' | 'output'>(
     'output',
   )
-
-  const styles = useMemo(() => {
-    const nodes = document.querySelectorAll('link[rel="stylesheet"]')
-    return Array.from(nodes)
-      .map((node) => node.outerHTML)
-      .join('')
-  }, [])
 
   const handleChange = useCallback((ev: ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = ev.target
@@ -98,15 +92,39 @@ export default function App({ wsUrl }: AppProps) {
 
         {message &&
           (outputSelector === 'preview' ? (
-            <iframe
-              title="preview"
-              sandbox=""
-              srcDoc={`${styles}<div class="prose lg:prose">${message}<div/>`}
-            />
+            <HtmlPreview html={message} />
           ) : (
             <div>{message}</div>
           ))}
       </div>
     </div>
   )
+}
+
+function HtmlPreview({ html }: { readonly html: string }) {
+  const ref = useRef<HTMLIFrameElement>(null)
+
+  const srcDoc = useMemo(() => {
+    const nodes = document.querySelectorAll('link[rel="stylesheet"]')
+    const styles = Array.from(nodes).map((node) => node.outerHTML)
+
+    return `${styles.join('')}<div class="prose lg:prose">${html}<div/>`
+  }, [html])
+
+  useEffect(() => {
+    const iframe = ref.current
+    if (!iframe) return
+
+    const handleLoad = () => {
+      const doc = iframe.contentDocument || iframe.contentWindow?.document
+      if (doc) iframe.height = `${doc.documentElement.scrollHeight}px`
+    }
+    iframe.addEventListener('load', handleLoad, { once: true })
+
+    return () => {
+      iframe.removeEventListener('load', handleLoad)
+    }
+  }, [])
+
+  return <iframe ref={ref} title="preview" srcDoc={srcDoc} />
 }
