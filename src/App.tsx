@@ -41,7 +41,7 @@ export default function App({ wsUrl }: AppProps) {
   }, [socket])
 
   return (
-    <div className="grid h-screen grid-flow-col grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
+    <div className="grid min-h-screen grid-flow-col grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
       <div className="h-full border-dn-foreground-100/80 border-b p-4 md:border-r md:border-b-0">
         <select
           className="mb-2 rounded py-2 text-dn-foreground-200 outline-none hover:bg-dn-background-100/60"
