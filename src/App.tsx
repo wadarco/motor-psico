@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { FormatInputs } from './lib/utils.ts'
+import { FormatInputs } from './lib/pandoc.ts'
 
 interface AppProps {
   readonly wsUrl: string

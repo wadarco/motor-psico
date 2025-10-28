@@ -1,4 +1,4 @@
-import { pandoc } from '~/lib/utils.ts'
+import { pandoc } from '~/lib/pandoc'
 import index from './index.html'
 
 Bun.serve({
