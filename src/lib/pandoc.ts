@@ -47,32 +47,42 @@ export const FormatInputs = [
 ] as const
 export type FormatInputs = (typeof FormatInputs)[number]
 
-interface PandocOptions {
-  readonly from: FormatInputs
-  readonly to: string
-  readonly text: string
-  readonly signal?: AbortSignal
-}
+class PandocError extends Error {
+  public readonly status: number
+  public override readonly cause?: string
 
-type PandocResult = { ok: string } | { err: string }
+  constructor(status: number, cause?: string) {
+    super(`Pandoc process failed: \n${status}`, { cause })
+    this.name = 'PandocError'
+    this.status = status
 
-export async function pandoc(options: PandocOptions): Promise<PandocResult> {
-  if (!FormatInputs.includes(options.from)) {
-    const validFormats = FormatInputs.join(', ')
-    return {
-      err: `Invalid 'from' format: ${options.from}. Valid formats are: ${validFormats}`,
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PandocError)
     }
   }
-  const proc = Bun.spawn({
-    cmd: ['pandoc', '-f', options.from, '-t', options.to],
-    stdin: Buffer.from(options.text, 'utf-8'),
-    signal: options.signal,
-    killSignal: 9, //SIGKILL
-  })
+}
 
-  if ((await proc.exited) !== 0) {
+type PandocResult<T = string> = { ok: T } | { err: PandocError }
+
+interface PandocCommand {
+  readonly inputFormat: FormatInputs
+  readonly outputFormat: string
+  readonly text: string
+  readonly killSignal?: AbortSignal
+}
+
+export async function runPandoc(options: PandocCommand): Promise<PandocResult> {
+  const proc = Bun.spawn({
+    cmd: ['pandoc', '-f', options.inputFormat, '-t', options.outputFormat],
+    stdin: Buffer.from(options.text, 'utf-8'),
+    signal: options.killSignal,
+    killSignal: 9, // SIGKILL
+  })
+  const exitCode = await proc.exited
+
+  if (exitCode !== 0) {
     const errMsg = await new Response(proc.stderr).text()
-    return { err: `Pandoc failed with exit code ${proc.exitCode}:\n${errMsg}` }
+    return { err: new PandocError(exitCode, errMsg) }
   }
 
   return { ok: await new Response(proc.stdout).text() }

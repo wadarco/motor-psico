@@ -1,4 +1,4 @@
-import { pandoc } from '~/lib/pandoc'
+import { runPandoc } from '~/lib/pandoc'
 import index from './index.html'
 
 Bun.serve({
@@ -25,11 +25,11 @@ Bun.serve({
       Object.assign(ws.data, { processCtrl })
 
       const { from, text } = JSON.parse(message.toString())
-      const result = await pandoc({
-        from,
-        to: 'html',
+      const result = await runPandoc({
+        inputFormat: from,
+        outputFormat: 'html5',
+        killSignal: processCtrl.signal,
         text,
-        signal: processCtrl.signal,
       })
 
       if ('ok' in result) ws.sendText(result.ok, true)
