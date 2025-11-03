@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import PageSet from './components/PageSet.tsx'
 import { FormatInputs } from './lib/pandoc.ts'
 
 interface AppProps {
@@ -41,9 +42,9 @@ export default function App({ wsUrl }: AppProps) {
   }, [socket])
 
   return (
-    <div className="grid h-screen grid-flow-col grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
-      <div className="flex flex-col border-dn-foreground-100/80 border-b p-4 md:border-r md:border-b-0">
-        <div>
+    <div className="grid h-screen grid-cols-[1fr] grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
+      <PageSet.Root className="border-b md:border-r md:border-b-0">
+        <PageSet.Header>
           <select
             className="mb-2 rounded py-2 text-dn-foreground-200 outline-none hover:bg-dn-background-100/60"
             name="from"
@@ -60,17 +61,20 @@ export default function App({ wsUrl }: AppProps) {
               </option>
             ))}
           </select>
-        </div>
-        <textarea
-          className="scrollbar min-h-40 w-full resize-none text-dn-foreground-200 outline-none [scrollbar-width:thin] placeholder:text-dn-foreground-100"
-          name="text"
-          placeholder="Start typing here"
-          onChange={handleChange}
-        />
-      </div>
+        </PageSet.Header>
 
-      <div className="flex flex-col p-4">
-        <div className="pb-4">
+        <PageSet.Body>
+          <textarea
+            className="scrollbar min-h-40 w-full resize-none text-dn-foreground-200 outline-none [scrollbar-width:thin] placeholder:text-dn-foreground-100"
+            name="text"
+            placeholder="Start typing here"
+            onChange={handleChange}
+          />
+        </PageSet.Body>
+      </PageSet.Root>
+
+      <PageSet.Root>
+        <PageSet.Header className="pb-4">
           <button
             className={`cursor-pointer rounded-l-xl border border-dn-foreground-100 px-2 py-1 ${
               outputSelector === 'output'
@@ -89,17 +93,17 @@ export default function App({ wsUrl }: AppProps) {
           >
             Preview
           </button>
-        </div>
+        </PageSet.Header>
 
-        <section className="overflow-auto [scrollbar-width:thin]">
+        <PageSet.Body>
           {message &&
             (outputSelector === 'preview' ? (
               <HtmlPreview html={message} />
             ) : (
               message
             ))}
-        </section>
-      </div>
+        </PageSet.Body>
+      </PageSet.Root>
     </div>
   )
 }
