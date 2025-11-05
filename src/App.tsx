@@ -3,9 +3,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
+import DocumentPreview from './components/DocumentPreview.tsx'
 import PageSet from './components/PageSet.tsx'
 import { FormatInputs } from './lib/pandoc.ts'
 
@@ -98,7 +98,7 @@ export default function App({ wsUrl }: AppProps) {
         <PageSet.Body>
           {message &&
             (outputSelector === 'preview' ? (
-              <HtmlPreview html={message} />
+              <DocumentPreview.Root html={message} />
             ) : (
               message
             ))}
@@ -106,35 +106,4 @@ export default function App({ wsUrl }: AppProps) {
       </PageSet.Root>
     </div>
   )
-}
-
-function HtmlPreview({ html }: { readonly html: string }) {
-  const ref = useRef<HTMLIFrameElement>(null)
-
-  const srcDoc = useMemo(() => {
-    const nodes = document.querySelectorAll('link[rel="stylesheet"]')
-    const styles = Array.from(nodes).map((node) => node.outerHTML)
-
-    return `${styles.join('')}<div class="prose lg:prose">${html}<div/>`
-  }, [html])
-
-  useEffect(() => {
-    const iframe = ref.current
-    if (!iframe) return
-    const ctrl = new AbortController()
-
-    iframe.addEventListener(
-      'load',
-      () => {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        iframe.height = 'auto'
-        if (doc) iframe.height = `${doc.documentElement.scrollHeight}px`
-      },
-      { signal: ctrl.signal },
-    )
-
-    return () => ctrl.abort()
-  }, [])
-
-  return <iframe ref={ref} className="w-full" title="preview" srcDoc={srcDoc} />
 }
