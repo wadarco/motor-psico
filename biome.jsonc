@@ -47,5 +47,8 @@
       "indentScriptAndStyle": true
     },
     "experimentalFullSupportEnabled": true
+  },
+  "files": {
+    "includes": ["**", "!src/assets/pandoc-template.html"]
   }
 }

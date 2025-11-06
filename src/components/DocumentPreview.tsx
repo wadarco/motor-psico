@@ -6,8 +6,7 @@ function DocumentPreview({ html }: { readonly html: string }) {
   const srcDoc = useMemo(() => {
     const nodes = document.querySelectorAll('link[rel="stylesheet"]')
     const styles = Array.from(nodes).map((node) => node.outerHTML)
-
-    return `${styles.join('')}<div class="prose lg:prose">${html}<div/>`
+    return html.replace('</head>', `${styles.join('')}</head>`)
   }, [html])
 
   useEffect(() => {

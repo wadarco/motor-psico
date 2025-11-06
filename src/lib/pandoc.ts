@@ -73,7 +73,16 @@ interface PandocCommand {
 
 export async function runPandoc(options: PandocCommand): Promise<PandocResult> {
   const proc = Bun.spawn({
-    cmd: ['pandoc', '-f', options.inputFormat, '-t', options.outputFormat],
+    cmd: [
+      'pandoc',
+      '-s',
+      '--template',
+      'src/assets/pandoc-template.html',
+      '-f',
+      options.inputFormat,
+      '-t',
+      options.outputFormat,
+    ],
     stdin: Buffer.from(options.text, 'utf-8'),
     signal: options.killSignal,
     killSignal: 9, // SIGKILL
