@@ -1,33 +1,62 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [height, setHeight] = useState<number>()
 
-  const srcDoc = useMemo(() => {
-    const nodes = document.querySelectorAll('link[rel="stylesheet"]')
-    const styles = Array.from(nodes).map((node) => node.outerHTML)
-    return html.replace('</head>', `${styles.join('')}</head>`)
-  }, [html])
+  const handleLoad = useCallback(() => setIsLoaded(true), [])
 
-  useEffect(() => {
-    const iframe = ref.current
-    if (!iframe) return
+  useLayoutEffect(() => {
+    const frame = ref.current
+    if (!frame) return
+
     const ctrl = new AbortController()
-
-    iframe.addEventListener(
-      'load',
-      () => {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        iframe.height = 'auto'
-        if (doc) iframe.height = `${doc.documentElement.scrollHeight}px`
-      },
-      { signal: ctrl.signal },
-    )
+    frame.addEventListener('load', handleLoad, { signal: ctrl.signal })
 
     return () => ctrl.abort()
+  }, [handleLoad])
+
+  useLayoutEffect(() => {
+    const frame = ref.current
+    if (!frame?.contentWindow || !isLoaded) return
+
+    frame.contentWindow?.postMessage(
+      { type: '~document-preview/render', payload: html },
+      window.location.origin,
+    )
+  }, [html, isLoaded])
+
+  useLayoutEffect(() => {
+    const ctrl = new AbortController()
+
+    window.addEventListener('message', (msg) => {
+      if (
+        msg.origin !== window.origin ||
+        msg.data.type !== '~document-preview/resize' ||
+        !ref.current
+      ) {
+        return
+      }
+
+      setHeight(msg.data.payload.height)
+    })
+
+    return () => {
+      ctrl.abort
+    }
   }, [])
 
-  return <iframe ref={ref} className="w-full" title="preview" srcDoc={srcDoc} />
+  return (
+    <iframe
+      ref={ref}
+      className="min-h-40 w-full"
+      height={height}
+      title="preview"
+      loading="eager"
+      src="/document-preview"
+    />
+  )
 }
 
 export default { Root: DocumentPreview }

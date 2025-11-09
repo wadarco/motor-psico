@@ -1,9 +1,11 @@
 import { runPandoc } from '~/lib/pandoc'
+import DocumentPreview from './document-preview/index.html'
 import index from './index.html'
 
 Bun.serve({
   routes: {
     '/*': index,
+    '/document-preview': DocumentPreview,
     '/socket': (req, server) => {
       const success = server.upgrade(req, {
         data: {

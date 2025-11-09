@@ -15,3 +15,9 @@ createRoot(document.getElementById('root') as HTMLElement).render(
     <App wsUrl={`${window.origin}/socket`} />
   </StrictMode>,
 )
+
+// window.addEventListener('message', (event) => {
+//   if (event.data.type !== 'document-preview') return
+//   console.log(event.data)
+//   // …
+// })
