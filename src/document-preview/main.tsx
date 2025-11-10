@@ -1,18 +1,13 @@
 import '../styles.css'
+import { isValidRenderEvent } from './utils.ts'
 
 window.addEventListener('message', (event) => {
   const root = document.getElementById('root')
-
-  if (
-    event.origin !== window.origin ||
-    event.data.type !== '~document-preview/render' ||
-    root === null
-  ) {
-    return
-  }
+  if (!isValidRenderEvent(event) || !root) return
 
   const domParser = new DOMParser()
-  const doc = domParser.parseFromString(event.data.payload, 'text/html')
+  const { source } = event.data.payload
+  const doc = domParser.parseFromString(source, 'text/html')
 
   for (const node of Array.from(root.childNodes)) {
     root.removeChild(node)

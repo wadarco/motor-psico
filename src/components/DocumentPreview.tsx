@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import type { RenderAction } from '~/document-preview/utils.ts'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
@@ -21,10 +22,12 @@ function DocumentPreview({ html }: { readonly html: string }) {
     const frame = ref.current
     if (!frame?.contentWindow || !isLoaded) return
 
-    frame.contentWindow?.postMessage(
-      { type: '~document-preview/render', payload: html },
-      window.location.origin,
-    )
+    const msg: RenderAction = {
+      type: '~document-preview/render',
+      payload: { source: html },
+    }
+
+    frame.contentWindow?.postMessage(msg, window.location.origin)
   }, [html, isLoaded])
 
   useLayoutEffect(() => {
