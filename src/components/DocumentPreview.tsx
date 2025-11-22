@@ -1,10 +1,11 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import type { RenderAction } from '~/document-preview/utils.ts'
+import type { RenderAction, ResizeAction } from '~/document-preview/utils.ts'
+import { useMessage } from '~/hooks/useMessage'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [height, setHeight] = useState<number>()
+  const size = useMessage<ResizeAction>('~document-preview/resize')
 
   const handleLoad = useCallback(() => setIsLoaded(true), [])
 
@@ -30,31 +31,11 @@ function DocumentPreview({ html }: { readonly html: string }) {
     frame.contentWindow?.postMessage(msg, window.location.origin)
   }, [html, isLoaded])
 
-  useLayoutEffect(() => {
-    const ctrl = new AbortController()
-
-    window.addEventListener('message', (msg) => {
-      if (
-        msg.origin !== window.origin ||
-        msg.data.type !== '~document-preview/resize' ||
-        !ref.current
-      ) {
-        return
-      }
-
-      setHeight(msg.data.payload.height)
-    })
-
-    return () => {
-      ctrl.abort
-    }
-  }, [])
-
   return (
     <iframe
       ref={ref}
       className="min-h-40 w-full"
-      height={height}
+      height={size ? `${size.height}px` : ''}
       title="preview"
       loading="eager"
       src="/document-preview"
