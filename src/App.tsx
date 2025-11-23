@@ -1,12 +1,7 @@
-import {
-  type ChangeEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react'
 import DocumentPreview from './components/DocumentPreview.tsx'
 import PageSet from './components/PageSet.tsx'
+import { useWebSocket } from './hooks/useWebSocket.ts'
 import { FormatInputs } from './lib/pandoc.ts'
 
 interface AppProps {
@@ -15,9 +10,8 @@ interface AppProps {
 
 export default function App({ wsUrl }: AppProps) {
   const [textarea, setTextarea] = useState('')
-  const [message, setMessage] = useState('')
   const [from, setFrom] = useState<string>('markdown')
-  const socket = useMemo(() => new WebSocket(wsUrl), [wsUrl])
+  const ws = useWebSocket(wsUrl)
   const [outputSelector, setOutputSelector] = useState<'preview' | 'output'>(
     'output',
   )
@@ -31,15 +25,8 @@ export default function App({ wsUrl }: AppProps) {
   }, [])
 
   useEffect(() => {
-    if (socket.readyState === socket.OPEN) {
-      const msg = JSON.stringify({ text: textarea, from })
-      socket.send(msg)
-    }
-  }, [socket, from, textarea])
-
-  useEffect(() => {
-    socket.addEventListener('message', (ev) => setMessage(ev.data))
-  }, [socket])
+    ws.sendMessage({ text: textarea, from })
+  }, [ws, from, textarea])
 
   return (
     <div className="grid h-screen grid-cols-[1fr] grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
@@ -96,11 +83,11 @@ export default function App({ wsUrl }: AppProps) {
         </PageSet.Header>
 
         <PageSet.Body>
-          {message &&
+          {ws.message &&
             (outputSelector === 'preview' ? (
-              <DocumentPreview.Root html={message} />
+              <DocumentPreview.Root html={ws.message} />
             ) : (
-              message
+              ws.message
             ))}
         </PageSet.Body>
       </PageSet.Root>
