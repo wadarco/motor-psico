@@ -1,41 +1,36 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import type { RenderAction, ResizeAction } from '~/document-preview/utils.ts'
-import { useMessage } from '~/hooks/useMessage'
+import { useEffect, useRef } from 'react'
+import type { RenderAction } from '~/document-preview/utils.ts'
+import { useChannel } from '~/hooks/useChannel.ts'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const size = useMessage<ResizeAction>('~document-preview/resize')
+  const contentWindowRef = useRef<Window>(null)
+  const frameChannel = useChannel<RenderAction, { height: string }>(
+    '~preview/connect',
+    contentWindowRef,
+  )
 
-  const handleLoad = useCallback(() => setIsLoaded(true), [])
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     const frame = ref.current
-    if (!frame) return
+    if (!frame || !frame.contentWindow) return
 
-    const ctrl = new AbortController()
-    frame.addEventListener('load', handleLoad, { signal: ctrl.signal })
+    contentWindowRef.current = frame.contentWindow
+  }, [])
 
-    return () => ctrl.abort()
-  }, [handleLoad])
-
-  useLayoutEffect(() => {
-    const frame = ref.current
-    if (!frame?.contentWindow || !isLoaded) return
-
+  useEffect(() => {
     const msg: RenderAction = {
       type: '~document-preview/render',
       payload: { source: html },
     }
 
-    frame.contentWindow?.postMessage(msg, window.location.origin)
-  }, [html, isLoaded])
+    frameChannel.sendMessage(msg)
+  }, [html, frameChannel.sendMessage])
 
   return (
     <iframe
       ref={ref}
       className="min-h-40 w-full"
-      height={size ? `${size.height}px` : ''}
+      height={frameChannel.message ? `${frameChannel.message.height}px` : ''}
       title="preview"
       loading="eager"
       src="/document-preview"

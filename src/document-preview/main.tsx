@@ -1,9 +1,8 @@
 import '../styles.css'
-import { isValidRenderEvent } from './utils.ts'
 
-window.addEventListener('message', (event) => {
+const handler = (port: MessagePort) => (event: MessageEvent) => {
   const root = document.getElementById('root')
-  if (!isValidRenderEvent(event) || !root) return
+  if (!root) return
 
   const domParser = new DOMParser()
   const { source } = event.data.payload
@@ -22,11 +21,16 @@ window.addEventListener('message', (event) => {
   })
 
   root.appendChild(doc.body)
-  parent.postMessage(
-    {
-      type: '~document-preview/resize',
-      payload: { height: document.body.offsetHeight },
-    },
-    window.location.origin,
-  )
+  port.postMessage({
+    type: '~document-preview/resize',
+    payload: { height: document.body.offsetHeight },
+  })
+}
+
+window.addEventListener('message', ({ data, ports }) => {
+  if (data?.key !== '~preview/connect' || !ports[0]) return
+  const port = ports[0]
+
+  port.start()
+  port.addEventListener('message', handler(port))
 })
