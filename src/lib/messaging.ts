@@ -3,7 +3,7 @@ export interface Message<T> {
 }
 
 export class ChannelBridge<Send, Receive> {
-  private port: MessagePort
+  private readonly port: MessagePort
 
   constructor(port: MessagePort) {
     this.port = port
