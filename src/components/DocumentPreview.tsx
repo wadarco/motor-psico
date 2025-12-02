@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
-import type { RenderAction } from '~/document-preview/utils.ts'
 import { useChannel } from '~/hooks/useChannel.ts'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
   const contentWindowRef = useRef<Window>(null)
-  const frameChannel = useChannel<RenderAction, { height: string }>(
-    '~preview/connect',
+  const frameChannel = useChannel<{ source: string }, { height: number }>(
+    '~preview/document',
+    '~preview/resize',
     contentWindowRef,
   )
 
@@ -18,12 +18,7 @@ function DocumentPreview({ html }: { readonly html: string }) {
   }, [])
 
   useEffect(() => {
-    const msg: RenderAction = {
-      type: '~document-preview/render',
-      payload: { source: html },
-    }
-
-    frameChannel.sendMessage(msg)
+    frameChannel.sendMessage({ source: html })
   }, [html, frameChannel.sendMessage])
 
   return (

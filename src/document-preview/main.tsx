@@ -1,11 +1,13 @@
 import '../styles.css'
+import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
-const handler = (port: MessagePort) => (event: MessageEvent) => {
+const DocMessage = MessageBuilder.of<{ source: string }>('~preview/document')
+
+const handler = ({ source }: typeof DocMessage.Payload) => {
   const root = document.getElementById('root')
   if (!root) return
 
   const domParser = new DOMParser()
-  const { source } = event.data.payload
   const doc = domParser.parseFromString(source, 'text/html')
 
   for (const node of Array.from(root.childNodes)) {
@@ -21,16 +23,22 @@ const handler = (port: MessagePort) => (event: MessageEvent) => {
   })
 
   root.appendChild(doc.body)
-  port.postMessage({
-    type: '~document-preview/resize',
-    payload: { height: document.body.offsetHeight },
-  })
 }
 
-window.addEventListener('message', ({ data, ports }) => {
-  if (data?.key !== '~preview/connect' || !ports[0]) return
-  const port = ports[0]
+window.addEventListener('message', (evt) => {
+  if (evt.data?.type !== ChannelFactory.InitMessageType) return
 
-  port.start()
-  port.addEventListener('message', handler(port))
+  const channel = ChannelFactory.accept(evt)
+  const ResizeMessage = MessageBuilder.of<{ height: number }>('~preview/resize')
+  const mutationObserver = new MutationObserver(() => {
+    channel.send(ResizeMessage.build({ height: document.body.offsetHeight }))
+  })
+
+  channel.on('~preview/document', handler)
+  mutationObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    characterData: true,
+  })
 })

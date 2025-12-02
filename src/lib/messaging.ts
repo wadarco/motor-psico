@@ -1,71 +1,95 @@
-export interface Message<T> {
-  payload: T
+export interface Message<T extends string, A> {
+  readonly type: T
+  readonly payload: A
 }
 
-export class ChannelBridge<Send, Receive> {
-  private readonly port: MessagePort
+export class MessageBuilder<T extends string, A> {
+  readonly Payload!: A
+  private constructor(private readonly type: T) {}
 
-  constructor(port: MessagePort) {
-    this.port = port
+  static of<Payload>(type: string): MessageBuilder<typeof type, Payload> {
+    return new MessageBuilder<typeof type, Payload>(type)
+  }
+
+  build(payload: A): Message<T, A> {
+    return {
+      type: this.type,
+      payload,
+    }
+  }
+}
+
+export interface MessageLister<T extends string, A> {
+  readonly type: T
+  readonly handler: (msg: Message<T, A>) => void
+}
+
+export class ChannelBridge {
+  private readonly listeners = new Map<
+    string,
+    Set<<Receive>(message: Receive) => void>
+  >()
+
+  constructor(private readonly port: MessagePort) {
     this.port.start()
+    this.port.addEventListener('message', ({ data }) => this.notify(data))
   }
 
-  send(data: Send): void {
-    this.port.postMessage(data)
+  private notify<Receive>(message: Message<string, Receive>) {
+    const handlers = this.listeners.get(message.type)
+    if (!handlers) return
+    for (const handler of handlers) {
+      handler(message.payload)
+    }
   }
 
-  onMessage(callback: (data: Receive) => void): void {
-    this.port.addEventListener('message', (event: MessageEvent<Receive>) => {
-      callback(event.data)
-    })
+  send<T extends string, A>(message: Message<T, A>): void {
+    this.port.postMessage(message)
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: TODO/infer
+  on<T extends string>(type: T, handler: (message: any) => void): void {
+    const handlers = this.listeners.get(type) ?? new Set()
+    handlers.add(handler)
+    this.listeners.set(type, handlers)
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: TODO/infer
+  off<T extends string>(type: T, handler: (message: any) => void): void {
+    const handlers = this.listeners.get(type)
+    if (handlers) handlers.delete(handler)
   }
 
   close(): void {
     this.port.close()
+    this.listeners.clear()
   }
 }
 
-export class ChannelBuilder<Send, Receive> {
-  private target: Worker | Window | null = null
-  private targetOrigin: string = '*'
-  private handshakeKey: string | undefined
-  private constructor() {}
+export namespace ChannelFactory {
+  export const InitMessageType = '~channel/INIT_CHANNEL'
+  export type InitMessageType = typeof InitMessageType
 
-  static create<Send, Receive>(): ChannelBuilder<Send, Receive> {
-    return new ChannelBuilder<Send, Receive>()
+  export function createAndTransfer(target: Worker | Window) {
+    const channel = new MessageChannel()
+    const HandshakeMessage = MessageBuilder.of<null>(InitMessageType)
+    const message = HandshakeMessage.build(null)
+
+    target instanceof Worker
+      ? target.postMessage(message, [channel.port2])
+      : target.postMessage(message, '*', [channel.port2])
+
+    return new ChannelBridge(channel.port1)
   }
 
-  /**
-   * @param target The Worker instance or the Iframe's contentWindow.
-   * @param origin Target origin for Iframes. Defaults to "*". Ignored for Workers.
-   */
-  withTarget(target: Worker | Window, origin: string = '*'): this {
-    this.target = target
-    this.targetOrigin = origin
-    return this
-  }
+  export function accept(evt: MessageEvent) {
+    const port = evt.ports?.[0]
 
-  /**
-   * @param key the specific signal string the target listens for
-   */
-  withHandshakeKey(key: string): this {
-    this.handshakeKey = key
-    return this
-  }
-
-  build(): ChannelBridge<Send, Receive> {
-    if (!this.target) {
-      throw new Error('Target must be provided before building.')
+    if (!port) {
+      throw new Error(
+        'ChannelBridge cannot be created: No MessagePort found in event.',
+      )
     }
-
-    const { port1, port2 } = new MessageChannel()
-    const payload = { key: this.handshakeKey }
-
-    // Workers and Windows have different postMessage signatures
-    this.target instanceof Worker
-      ? this.target.postMessage(payload, [port2])
-      : this.target.postMessage(payload, this.targetOrigin, [port2])
-
-    return new ChannelBridge<Send, Receive>(port1)
+    return new ChannelBridge(port)
   }
 }

@@ -1,21 +1,10 @@
-function onConnection(
-  handshakeKey: string,
-  callback: (port: MessagePort) => void,
-) {
-  const handler = (ev: MessageEvent) => {
-    if (ev.data?.key !== handshakeKey || !ev.ports[0]) return
-    callback(ev.ports[0])
+import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
+
+const TestMsg = MessageBuilder.of<{ value: 'test' }>('test')
+
+self.addEventListener('message', (evt) => {
+  if (evt.data?.type === ChannelFactory.InitMessageType) {
+    const channel = ChannelFactory.accept(evt)
+    channel.send(TestMsg.build({ value: 'test' }))
   }
-
-  self.addEventListener('message', handler)
-}
-
-onConnection('take-port', (port) => {
-  port.addEventListener(
-    'message',
-    ({ data: payload }: MessageEvent<string>) => {
-      // Reply to Main
-      port.postMessage({ status: 'received', payload })
-    },
-  )
 })
