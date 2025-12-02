@@ -1,13 +1,13 @@
 import '../styles.css'
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
+const domParser = new DOMParser()
 const DocMessage = MessageBuilder.of<{ source: string }>('~preview/document')
 
 const handler = ({ source }: typeof DocMessage.Payload) => {
   const root = document.getElementById('root')
   if (!root) return
 
-  const domParser = new DOMParser()
   const doc = domParser.parseFromString(source, 'text/html')
 
   for (const node of Array.from(root.childNodes)) {
