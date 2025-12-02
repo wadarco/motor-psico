@@ -1,6 +1,6 @@
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
-const TestMsg = MessageBuilder.of<{ value: 'test' }>('test')
+const TestMsg = MessageBuilder.of('test').withPayload<{ value: 'test' }>()
 
 self.addEventListener('message', (evt) => {
   if (evt.data?.type === ChannelFactory.InitMessageType) {

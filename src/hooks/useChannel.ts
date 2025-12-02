@@ -12,7 +12,7 @@ export function useChannel<Send, Receive>(
 ) {
   const [message, setMessage] = useState<Receive>()
   const channelRef = useRef<ChannelBridge>(null)
-  const MsgBuilder = useRef(MessageBuilder.of<Send>(type))
+  const MsgBuilder = useRef(MessageBuilder.of(type).withPayload<Send>())
 
   const sendMessage = useCallback(
     (data: Send) =>

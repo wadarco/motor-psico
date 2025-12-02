@@ -7,14 +7,18 @@ export class MessageBuilder<T extends string, A> {
   readonly Payload!: A
   private constructor(private readonly type: T) {}
 
-  static of<Payload>(type: string): MessageBuilder<typeof type, Payload> {
-    return new MessageBuilder<typeof type, Payload>(type)
+  static of<T extends string>(type: T): MessageBuilder<T, null> {
+    return new MessageBuilder<T, null>(type)
+  }
+
+  withPayload<const P = null>(): MessageBuilder<T, P> {
+    return this as unknown as MessageBuilder<T, P>
   }
 
   build(payload: A): Message<T, A> {
     return {
       type: this.type,
-      payload,
+      payload: payload || (null as A),
     }
   }
 }
@@ -72,7 +76,7 @@ export namespace ChannelFactory {
 
   export function createAndTransfer(target: Worker | Window) {
     const channel = new MessageChannel()
-    const HandshakeMessage = MessageBuilder.of<null>(InitMessageType)
+    const HandshakeMessage = MessageBuilder.of(InitMessageType)
     const message = HandshakeMessage.build(null)
 
     target instanceof Worker

@@ -2,7 +2,9 @@ import '../styles.css'
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
 const domParser = new DOMParser()
-const DocMessage = MessageBuilder.of<{ source: string }>('~preview/document')
+const DocMessage = MessageBuilder.of('~preview/document').withPayload<{
+  source: string
+}>()
 
 const handler = ({ source }: typeof DocMessage.Payload) => {
   const root = document.getElementById('root')
@@ -29,7 +31,9 @@ window.addEventListener('message', (evt) => {
   if (evt.data?.type !== ChannelFactory.InitMessageType) return
 
   const channel = ChannelFactory.accept(evt)
-  const ResizeMessage = MessageBuilder.of<{ height: number }>('~preview/resize')
+  const ResizeMessage = MessageBuilder.of('~preview/resize').withPayload<{
+    height: number
+  }>()
   const mutationObserver = new MutationObserver(() => {
     channel.send(ResizeMessage.build({ height: document.body.offsetHeight }))
   })

@@ -2,7 +2,7 @@ import { describe, test } from 'bun:test'
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
 describe('messaging', () => {
-  const TestMsg = MessageBuilder.of<{ value: 'test' }>('test')
+  const TestMsg = MessageBuilder.of('test').withPayload<{ value: 'test' }>()
 
   test('creating', (done) => {
     const worker = new Worker('test/mocks/worker.ts', { type: 'module' })
