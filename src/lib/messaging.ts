@@ -15,10 +15,10 @@ export class MessageBuilder<T extends string, A> {
     return this as unknown as MessageBuilder<T, P>
   }
 
-  build(payload: A): Message<T, A> {
+  build(...args: null extends A ? [payload?: A] : [payload: A]): Message<T, A> {
     return {
       type: this.type,
-      payload: payload || (null as A),
+      payload: args[0] ?? (null as A),
     }
   }
 }
@@ -77,7 +77,7 @@ export namespace ChannelFactory {
   export function createAndTransfer(target: Worker | Window) {
     const channel = new MessageChannel()
     const HandshakeMessage = MessageBuilder.of(InitMessageType)
-    const message = HandshakeMessage.build(null)
+    const message = HandshakeMessage.build()
 
     target instanceof Worker
       ? target.postMessage(message, [channel.port2])
