@@ -24,8 +24,7 @@ function DocumentPreview({ html }: { readonly html: string }) {
   return (
     <iframe
       ref={ref}
-      className="min-h-40 w-full"
-      height={frameChannel.message ? `${frameChannel.message.height}px` : ''}
+      className="h-full min-h-40 w-full"
       title="preview"
       loading="eager"
       src="/document-preview"

@@ -31,18 +31,7 @@ window.addEventListener('message', (evt) => {
   if (evt.data?.type !== ChannelFactory.InitMessageType) return
 
   const channel = ChannelFactory.accept(evt)
-  const ResizeMessage = MessageBuilder.of('~preview/resize').withPayload<{
-    height: number
-  }>()
-  const mutationObserver = new MutationObserver(() => {
-    channel.send(ResizeMessage.build({ height: document.body.offsetHeight }))
-  })
-
   channel.on('~preview/document', handler)
-  mutationObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    characterData: true,
-  })
 })
+
+document.documentElement.style.scrollbarWidth = 'thin'

@@ -19,15 +19,4 @@ function Header({ children, ...props }: PageSetProps) {
   return <header {...props}>{children}</header>
 }
 
-function Body({ children, className, ...props }: PageSetProps) {
-  return (
-    <div
-      className={`overflow-auto [scrollbar-width:thin] ${className || ''}`}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-}
-
-export default { Root: PageSet, Header, Body }
+export default { Root: PageSet, Header }

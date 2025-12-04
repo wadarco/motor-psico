@@ -29,7 +29,7 @@ export default function App({ wsUrl }: AppProps) {
   }, [ws, from, textarea])
 
   return (
-    <div className="grid h-screen grid-cols-[1fr] grid-rows-[auto_1fr] md:grid-cols-2 md:grid-rows-1">
+    <div className="grid h-screen grid-cols-[1fr] grid-rows-[auto_1fr] overflow-hidden md:grid-cols-2 md:grid-rows-1">
       <PageSet.Root className="border-b md:border-r md:border-b-0">
         <PageSet.Header>
           <select
@@ -50,14 +50,12 @@ export default function App({ wsUrl }: AppProps) {
           </select>
         </PageSet.Header>
 
-        <PageSet.Body>
-          <textarea
-            className="scrollbar min-h-40 w-full resize-none text-dn-foreground-200 outline-none [scrollbar-width:thin] placeholder:text-dn-foreground-100"
-            name="text"
-            placeholder="Start typing here"
-            onChange={handleChange}
-          />
-        </PageSet.Body>
+        <textarea
+          className="min-h-40 w-full resize-none text-dn-foreground-200 outline-none [scrollbar-width:thin] placeholder:text-dn-foreground-100"
+          name="text"
+          placeholder="Start typing here"
+          onChange={handleChange}
+        />
       </PageSet.Root>
 
       <PageSet.Root>
@@ -82,14 +80,14 @@ export default function App({ wsUrl }: AppProps) {
           </button>
         </PageSet.Header>
 
-        <PageSet.Body>
-          {ws.message &&
-            (outputSelector === 'preview' ? (
-              <DocumentPreview.Root html={ws.message} />
-            ) : (
-              ws.message
-            ))}
-        </PageSet.Body>
+        {ws.message &&
+          (outputSelector === 'preview' ? (
+            <DocumentPreview.Root html={ws.message} />
+          ) : (
+            <div className="overflow-auto [scrollbar-width:thin]">
+              {ws.message}
+            </div>
+          ))}
       </PageSet.Root>
     </div>
   )
