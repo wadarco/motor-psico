@@ -28,7 +28,7 @@ const handler = ({ source }: typeof DocMessage.Payload) => {
 }
 
 window.addEventListener('message', (evt) => {
-  if (evt.data?.type !== ChannelFactory.InitMessageType) return
+  if (evt.data?.type !== ChannelFactory.handshakeType) return
 
   const channel = ChannelFactory.accept(evt)
   channel.on('~preview/document', handler)

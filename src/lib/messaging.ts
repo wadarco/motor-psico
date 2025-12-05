@@ -33,6 +33,8 @@ export class ChannelBridge {
     string,
     Set<<Receive>(message: Receive) => void>
   >()
+  private readonly messageQueue = new Set<Message<string, unknown>>()
+  private isOpen: boolean = false
 
   constructor(private readonly port: MessagePort) {
     this.port.start()
@@ -42,13 +44,16 @@ export class ChannelBridge {
   private notify<Receive>(message: Message<string, Receive>) {
     const handlers = this.listeners.get(message.type)
     if (!handlers) return
+
     for (const handler of handlers) {
       handler(message.payload)
     }
   }
 
   send<T extends string, A>(message: Message<T, A>): void {
-    this.port.postMessage(message)
+    this.isOpen
+      ? this.port.postMessage(message)
+      : this.messageQueue.add(message)
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: TODO/infer
@@ -64,26 +69,43 @@ export class ChannelBridge {
     if (handlers) handlers.delete(handler)
   }
 
+  open() {
+    this.isOpen = true
+    if (this.messageQueue.size === 0) return
+
+    for (const message of this.messageQueue) {
+      this.port.postMessage(message)
+      this.messageQueue.delete(message)
+    }
+  }
+
   close(): void {
+    this.isOpen = false
     this.port.close()
     this.listeners.clear()
   }
 }
 
 export namespace ChannelFactory {
-  export const InitMessageType = '~channel/INIT_CHANNEL'
-  export type InitMessageType = typeof InitMessageType
+  export const handshakeType = '~channel:handshake'
+  const handshakeMessage = MessageBuilder.of(handshakeType)
 
   export function createAndTransfer(target: Worker | Window) {
     const channel = new MessageChannel()
-    const HandshakeMessage = MessageBuilder.of(InitMessageType)
-    const message = HandshakeMessage.build()
+    const bridge = new ChannelBridge(channel.port1)
+    const message = handshakeMessage.build()
+
+    const open = (): void => {
+      bridge.open()
+      bridge.off(handshakeType, open)
+    }
+    bridge.on(handshakeType, open)
 
     target instanceof Worker
       ? target.postMessage(message, [channel.port2])
       : target.postMessage(message, '*', [channel.port2])
 
-    return new ChannelBridge(channel.port1)
+    return bridge
   }
 
   export function accept(evt: MessageEvent) {
@@ -94,6 +116,12 @@ export namespace ChannelFactory {
         'ChannelBridge cannot be created: No MessagePort found in event.',
       )
     }
-    return new ChannelBridge(port)
+
+    const bridge = new ChannelBridge(port)
+    const message = handshakeMessage.build()
+    bridge.open()
+    bridge.send(message)
+
+    return bridge
   }
 }

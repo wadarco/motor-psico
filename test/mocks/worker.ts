@@ -1,10 +1,12 @@
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
-const TestMsg = MessageBuilder.of('test').withPayload<{ value: 'test' }>()
+const terminateBuider = MessageBuilder.of('~test:terminate').withPayload()
 
 self.addEventListener('message', (evt) => {
-  if (evt.data?.type === ChannelFactory.InitMessageType) {
+  if (evt.data?.type === ChannelFactory.handshakeType) {
     const channel = ChannelFactory.accept(evt)
-    channel.send(TestMsg.build({ value: 'test' }))
+    const terminate = terminateBuider.build()
+
+    channel.on('test:sending', () => channel.send(terminate))
   }
 })

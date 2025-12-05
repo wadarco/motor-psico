@@ -1,18 +1,29 @@
-import { describe, test } from 'bun:test'
+import { afterAll, describe, expect, test } from 'bun:test'
 import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
 
 describe('messaging', () => {
-  const TestMsg = MessageBuilder.of('test').withPayload<{ value: 'test' }>()
+  const worker = new Worker('test/mocks/worker.ts', { type: 'module' })
 
   test('creating', (done) => {
-    const worker = new Worker('test/mocks/worker.ts', { type: 'module' })
     const channel = ChannelFactory.createAndTransfer(worker)
-    const handler = (_message: typeof TestMsg.Payload) => {
-      worker.terminate()
-      channel.off('test', handler)
+
+    channel.on(ChannelFactory.handshakeType, () => {
       channel.close()
       done()
-    }
-    channel.on('test', handler)
+    })
   })
+
+  test('sending', (done) => {
+    const channel = ChannelFactory.createAndTransfer(worker)
+    const messageBuilder = MessageBuilder.of('test:sending')
+
+    channel.on('~test:terminate', (data) => {
+      channel.close()
+      expect(data).toBe(null)
+      done()
+    })
+    channel.send(messageBuilder.build())
+  })
+
+  afterAll(() => worker.terminate())
 })
