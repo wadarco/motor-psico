@@ -1,5 +1,6 @@
 import '../styles.css'
-import { ChannelFactory, MessageBuilder } from '~/lib/messaging.ts'
+import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
+import { MessageBuilder } from '~/lib/messaging/Message.ts'
 
 const domParser = new DOMParser()
 const DocMessage = MessageBuilder.of('~preview/document').withPayload<{

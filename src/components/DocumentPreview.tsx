@@ -1,25 +1,35 @@
 import { useEffect, useRef } from 'react'
-import { useChannel } from '~/hooks/useChannel.ts'
+import {
+  type ChannelBridge,
+  ChannelFactory,
+} from '~/lib/messaging/ChannelBridge.ts'
 
 function DocumentPreview({ html }: { readonly html: string }) {
   const ref = useRef<HTMLIFrameElement>(null)
-  const contentWindowRef = useRef<Window>(null)
-  const frameChannel = useChannel<{ source: string }, { height: number }>(
-    '~preview/document',
-    '~preview/resize',
-    contentWindowRef,
-  )
+  const channelRef = useRef<ChannelBridge | null>(null)
 
   useEffect(() => {
     const frame = ref.current
-    if (!frame || !frame.contentWindow) return
+    if (!frame) return
 
-    contentWindowRef.current = frame.contentWindow
+    const handleLoad = () => {
+      if (!frame.contentWindow) return
+      channelRef.current = ChannelFactory.createAndTransfer(frame.contentWindow)
+    }
+    frame.contentWindow?.addEventListener('load', handleLoad)
+
+    return () => {
+      channelRef.current = null
+      frame.removeEventListener('load', handleLoad)
+    }
   }, [])
 
   useEffect(() => {
-    frameChannel.sendMessage({ source: html })
-  }, [html, frameChannel.sendMessage])
+    channelRef.current?.send({
+      type: '~preview/document',
+      payload: { source: html },
+    })
+  }, [html])
 
   return (
     <iframe
