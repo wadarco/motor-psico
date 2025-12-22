@@ -1,4 +1,4 @@
-import { isMessage, type Message, MessageBuilder } from './Message.ts'
+import { isMessage, type Message, message } from './Message.ts'
 
 export class ChannelBridge<
   Outbound extends Message<string, unknown> = never,
@@ -97,14 +97,12 @@ export class MessageTransport implements Transport<never, never> {
 
 export namespace ChannelFactory {
   export const handshakeType = '~channel:handshake'
-  const handshakeMessage = MessageBuilder.of(
-    handshakeType,
-  ).withPayload<MessagePort | null>()
+  const createHandshake = message(handshakeType)
 
   export function createAndTransfer(target: Worker | Window): ChannelBridge {
     const channel = new MessageChannel()
     const transport = new MessageTransport(channel.port1)
-    const message = handshakeMessage.build(channel.port2)
+    const message = createHandshake(channel.port2)
     const open = () => bridge.off(handshakeType, open)
     const bridge = new ChannelBridge().on(handshakeType, open).bindTo(transport)
 
@@ -117,11 +115,12 @@ export namespace ChannelFactory {
 
   export function accept({
     data,
-  }: MessageEvent<Message<string, typeof handshakeMessage.Payload>>) {
+  }: MessageEvent<Message<string, MessagePort | null>>) {
     if (!(data.payload instanceof MessagePort)) {
       throw new Error('ChannelBridge cannot be created: Incorrect message.')
     }
     const transport = new MessageTransport(data.payload)
-    return new ChannelBridge().bindTo(transport).send(handshakeMessage.build())
+    const handshake = createHandshake()
+    return new ChannelBridge().bindTo(transport).send(handshake)
   }
 }

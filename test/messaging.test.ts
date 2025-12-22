@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from 'bun:test'
 import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
-import { MessageBuilder } from '~/lib/messaging/Message.ts'
+import { message } from '~/lib/messaging/Message.ts'
 
 describe('test', () => {
   const worker = new Worker('test/mocks/worker.ts', { type: 'module' })
@@ -12,14 +12,14 @@ describe('test', () => {
 
   test('sending', (done) => {
     const channel = ChannelFactory.createAndTransfer(worker)
-    const messageBuilder = MessageBuilder.of('test:sending')
+    const testingMsg = message('test:sending')()
 
     channel
       .on('~test:terminate', (data) => {
         expect(data).toBe(null)
         done()
       })
-      .send(messageBuilder.build())
+      .send(testingMsg)
   })
 
   afterAll(() => worker.terminate())

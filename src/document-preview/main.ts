@@ -1,13 +1,9 @@
 import '../styles.css'
 import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
-import { MessageBuilder } from '~/lib/messaging/Message.ts'
 
 const domParser = new DOMParser()
-const DocMessage = MessageBuilder.of('~preview/document').withPayload<{
-  source: string
-}>()
 
-const handler = ({ source }: typeof DocMessage.Payload) => {
+const handler = ({ source }: { source: string }) => {
   const root = document.getElementById('root')
   if (!root) return
 
