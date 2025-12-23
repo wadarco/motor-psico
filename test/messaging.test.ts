@@ -1,17 +1,22 @@
 import { afterAll, describe, expect, test } from 'bun:test'
-import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
+import {
+  ChannelBridge,
+  ChannelFactory,
+  InitiatorStrategy,
+  MessageTransport,
+} from '~/lib/messaging/ChannelBridge.ts'
 import { message } from '~/lib/messaging/Message.ts'
 
 describe('test', () => {
   const worker = new Worker('test/mocks/worker.ts', { type: 'module' })
-
-  test('creating', (done) => {
-    const channel = ChannelFactory.createAndTransfer(worker)
-    channel.on(ChannelFactory.handshakeType, () => done())
+  const factory = new ChannelFactory({
+    messageType: '~channel:handshake',
+    Bridge: ChannelBridge,
+    Transport: MessageTransport,
   })
 
   test('sending', (done) => {
-    const channel = ChannelFactory.createAndTransfer(worker)
+    const channel = factory.create(worker, new InitiatorStrategy())
     const testingMsg = message('test:sending')()
 
     channel

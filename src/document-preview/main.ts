@@ -1,5 +1,10 @@
 import '../styles.css'
-import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
+import {
+  ChannelBridge,
+  ChannelFactory,
+  EventStrategy,
+  MessageTransport,
+} from '~/lib/messaging/ChannelBridge.ts'
 
 const domParser = new DOMParser()
 
@@ -24,11 +29,14 @@ const handler = ({ source }: { source: string }) => {
   root.appendChild(doc.body)
 }
 
-window.addEventListener('message', (evt) => {
-  if (evt.data?.type !== ChannelFactory.handshakeType) return
+const factory = new ChannelFactory({
+  messageType: '~channel:handshake',
+  Bridge: ChannelBridge,
+  Transport: MessageTransport,
+})
 
-  const channel = ChannelFactory.accept(evt)
-  channel.on('~preview/document', handler)
+window.addEventListener('message', (evt) => {
+  factory.create(evt, new EventStrategy()).on('~preview/document', handler)
 })
 
 document.documentElement.style.scrollbarWidth = 'thin'

@@ -95,32 +95,55 @@ export class MessageTransport implements Transport<never, never> {
   }
 }
 
-export namespace ChannelFactory {
-  export const handshakeType = '~channel:handshake'
-  const createHandshake = message(handshakeType)
+export interface ChannelDependencies {
+  messageType: string
+  Bridge: typeof ChannelBridge
+  Transport: typeof MessageTransport
+}
 
-  export function createAndTransfer(target: Worker | Window): ChannelBridge {
-    const channel = new MessageChannel()
-    const transport = new MessageTransport(channel.port1)
-    const message = createHandshake(channel.port2)
-    const open = () => bridge.off(handshakeType, open)
-    const bridge = new ChannelBridge().on(handshakeType, open).bindTo(transport)
+interface ChannelStrategy<T> {
+  createBridge(client: T, deps: ChannelDependencies): ChannelBridge
+}
 
-    target instanceof Worker
-      ? target.postMessage(message, [channel.port2])
-      : target.postMessage(message, '*', [channel.port2])
+export class ChannelFactory {
+  constructor(private readonly deps: ChannelDependencies) {}
 
-    return bridge as ChannelBridge
+  create<T>(client: T, strategy: ChannelStrategy<T>): ChannelBridge {
+    return strategy.createBridge(client, this.deps)
   }
+}
 
-  export function accept({
-    data,
-  }: MessageEvent<Message<string, MessagePort | null>>) {
+export class InitiatorStrategy implements ChannelStrategy<Window | Worker> {
+  createBridge(
+    client: Window | Worker,
+    deps: ChannelDependencies,
+  ): ChannelBridge {
+    const channel = new MessageChannel()
+    const transport = new deps.Transport(channel.port1)
+    const bridge = new deps.Bridge()
+      .on(deps.messageType, () => open())
+      .bindTo(transport) as ChannelBridge
+
+    const open = () => bridge.off(deps.messageType, open)
+    const handshake = message(deps.messageType)(channel.port2)
+
+    client instanceof Worker
+      ? client.postMessage(handshake, [channel.port2])
+      : client.postMessage(handshake, '*', [channel.port2])
+
+    return bridge
+  }
+}
+
+export class EventStrategy implements ChannelStrategy<MessageEvent> {
+  createBridge(evt: MessageEvent, deps: ChannelDependencies): ChannelBridge {
+    const { data } = evt
     if (!(data.payload instanceof MessagePort)) {
-      throw new Error('ChannelBridge cannot be created: Incorrect message.')
+      throw new Error('Invalid MessagePort payload')
     }
-    const transport = new MessageTransport(data.payload)
-    const handshake = createHandshake()
-    return new ChannelBridge().bindTo(transport).send(handshake)
+    const transport = new deps.Transport(data.payload)
+    const handshake = message(deps.messageType)()
+
+    return new deps.Bridge().bindTo(transport).send(handshake)
   }
 }

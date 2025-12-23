@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import {
-  type ChannelBridge,
+  ChannelBridge,
   ChannelFactory,
+  InitiatorStrategy,
+  MessageTransport,
 } from '~/lib/messaging/ChannelBridge.ts'
 
 function DocumentPreview({ html }: { readonly html: string }) {
@@ -14,7 +16,16 @@ function DocumentPreview({ html }: { readonly html: string }) {
 
     const handleLoad = () => {
       if (!frame.contentWindow) return
-      channelRef.current = ChannelFactory.createAndTransfer(frame.contentWindow)
+      const factory = new ChannelFactory({
+        messageType: '~channel:handshake',
+        Bridge: ChannelBridge,
+        Transport: MessageTransport,
+      })
+
+      channelRef.current = factory.create(
+        frame.contentWindow,
+        new InitiatorStrategy(),
+      )
     }
     frame.contentWindow?.addEventListener('load', handleLoad)
 

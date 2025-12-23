@@ -1,12 +1,19 @@
-import { ChannelFactory } from '~/lib/messaging/ChannelBridge.ts'
+import {
+  ChannelBridge,
+  ChannelFactory,
+  EventStrategy,
+  MessageTransport,
+} from '~/lib/messaging/ChannelBridge.ts'
 import { message } from '~/lib/messaging/Message.ts'
 
+const factory = new ChannelFactory({
+  messageType: '~channel:handshake',
+  Bridge: ChannelBridge,
+  Transport: MessageTransport,
+})
 const createTerminate = message('~test:terminate')
 
 self.addEventListener('message', (evt) => {
-  if (evt.data?.type === ChannelFactory.handshakeType) {
-    const channel = ChannelFactory.accept(evt)
-    const terminate = createTerminate()
-    channel.on('test:sending', () => channel.send(terminate))
-  }
+  const msg = createTerminate()
+  factory.create(evt, new EventStrategy()).send(msg)
 })
